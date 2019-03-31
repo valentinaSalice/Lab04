@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,8 +38,15 @@ public class CorsoDAO {
 				System.out.println(codins + " " + numeroCrediti + " " + nome + " " + periodoDidattico);
 
 				// Crea un nuovo JAVA Bean Corso
+				
+				Corso c=new Corso(codins, numeroCrediti, nome, periodoDidattico);
+				
 				// Aggiungi il nuovo oggetto Corso alla lista corsi
+				
+				corsi.add(c);
 			}
+			
+			conn.close();
 
 			return corsi;
 
@@ -52,13 +60,66 @@ public class CorsoDAO {
 	 * Dato un codice insegnamento, ottengo il corso
 	 */
 	public void getCorso(Corso corso) {
+		
+		final String sql = "SELECT * FROM corso where codins=?";
+
+		try {
+			Connection conn = ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, corso.getCodins());
+
+			ResultSet rs = st.executeQuery();
+
+			if (rs.next()) {
+				corso.setCrediti(rs.getInt("crediti"));
+				corso.setNome(rs.getString("nome"));
+				corso.setPd(rs.getInt("pd"));
+			}
+
+			conn.close();
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Errore Db");
+		}
+		
+		
+		
+		
 		// TODO
 	}
 
 	/*
 	 * Ottengo tutti gli studenti iscritti al Corso
 	 */
-	public void getStudentiIscrittiAlCorso(Corso corso) {
+	public List<Studente> getStudentiIscrittiAlCorso(Corso corso) {
+		
+		final String sql="SELECT * FROM iscrizione, studente WHERE studente.matricola=iscrizione.matricola AND codins=?";
+		
+		List<Studente> studentiIscrittiAlCorso = new ArrayList<Studente>();
+		
+		try {
+			
+			Connection conn=ConnectDB.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setString(1, corso.getCodins());
+
+			ResultSet rs = st.executeQuery();
+			
+			while(rs.next()) {
+				
+				Studente s=new Studente(rs.getInt("matricola"),rs.getString("nome"),rs.getString("cognome"),rs.getString("cds"));
+				studentiIscrittiAlCorso.add(s);
+			}
+			
+			conn.close();
+			
+		}catch (SQLException e) {
+			// e.printStackTrace();
+			throw new RuntimeException("Errore Db");
+		}
+		
+		return studentiIscrittiAlCorso;
 		// TODO
 	}
 
